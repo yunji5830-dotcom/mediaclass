@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>스마트폰 화면</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #0c0d14;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* 슬림 스마트폰 외형 */
+    .phone-wrapper {
+      width: 360px;
+      height: 750px;
+      background-color: #000000;
+      border-radius: 48px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 0 8px #222530, 0 0 0 10px #15161c;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 상단 상태바 & 다이내믹 아일랜드 */
+    .status-bar {
+      height: 42px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+      z-index: 100;
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    .island {
+      width: 105px;
+      height: 26px;
+      background-color: #000000;
+      border-radius: 20px;
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 110;
+      box-shadow: 0 0 0 1px #1a1a1a;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      font-size: 11px;
+    }
+
+    /* 하단 홈 인디케이터 바 */
+    .home-bar-wrap {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 26px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 120;
+      cursor: pointer;
+    }
+
+    .home-indicator {
+      width: 130px;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 3px;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .home-bar-wrap:hover .home-indicator {
+      background-color: #ffffff;
+      transform: scaleY(1.3);
+    }
+
+    /* 스마트폰 스크린 래퍼 */
+    .screen-area {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background-color: #121424;
+      overflow: hidden;
+    }
+
+    /* 1. 홈 화면 (3열 그리드 배치) */
+    .home-screen {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(160deg, #1b213b 0%, #201533 50%, #0d0f18 100%);
+      padding: 56px 20px 36px;
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+
+    .home-clock-widget {
+      text-align: center;
+      margin: 10px 0 22px;
+      color: #ffffff;
+    }
+
+    .home-clock-widget .date {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    .home-clock-widget .time {
+      font-size: 46px;
+      font-weight: 200;
+      letter-spacing: -1px;
+    }
+
+    /* 3열 앱 그리드 */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      row-gap: 24px;
+      column-gap: 16px;
+      padding: 0 4px;
+    }
+
+    .app-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-align: center;
+      transition: transform 0.15s ease;
+    }
+
+    .app-item:active {
+      transform: scale(0.92);
+    }
+
+    .app-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 27px;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+
+    .app-label {
+      font-size: 11.5px;
+      color: #ffffff;
+      margin-top: 6px;
+      font-weight: 400;
+      letter-spacing: -0.3px;
+      white-space: nowrap;
+    }
+
+    .badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      background-color: #ff3b30;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 5px;
+      border-radius: 10px;
+      border: 2px solid #000000;
+    }
+
+    /* 공통 앱 창 스타일 */
+    .app-window {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      display: none;
+      flex-direction: column;
+      z-index: 20;
+      padding-top: 42px;
+      padding-bottom: 26px;
+      overflow: hidden;
+      animation: appOpen 0.22s ease-out forwards;
+    }
+
+    @keyframes appOpen {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .app-header {
+      height: 46px;
+      border-bottom: 1px solid #ebebeb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-weight: 600;
+      font-size: 15px;
+      background-color: #fafafa;
+      flex-shrink: 0;
+      color: #111111;
+    }
+
+    .back-btn {
+      cursor: pointer;
+      font-size: 18px;
+      color: #007aff;
+      display: flex;
+      align-items: center;
+    }
+
+    .app-body {
+      flex: 1;
+      overflow-y: auto;
+      background-color: #ffffff;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* 1. 스쿨톡 앱 (메신저) */
+    .chat-list-item {
+      display: flex;
+      padding: 13px 15px;
+      border-bottom: 1px solid #f2f2f2;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+
+    .chat-list-item:active {
+      background-color: #f7f7f7;
+    }
+
+    .chat-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      background-color: #e8ecf4;
+    }
+
+    .chat-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .chat-name-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .chat-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #222222;
+    }
+
+    .chat-time {
+      font-size: 10.5px;
+      color: #999999;
+    }
+
+    .chat-last-msg {
+      font-size: 11.5px;
+      color: #666666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .chat-room-view {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      background-color: #baccdb;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .msg-row {
+      display: flex;
+      gap: 8px;
+      max-width: 84%;
+    }
+
+    .msg-row.me {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg-bubble {
+      padding: 8px 12px;
+      border-radius: 13px;
+      font-size: 12.5px;
+      line-height: 1.45;
+      word-break: break-all;
+    }
+
+    .msg-row:not(.me) .msg-bubble {
+      background-color: #ffffff;
+      color: #111111;
+      border-top-left-radius: 2px;
+    }
+
+    .msg-row.me .msg-bubble {
+      background-color: #fee500;
+      color: #222222;
+      border-top-right-radius: 2px;
+    }
+
+    .msg-sender {
+      font-size: 10.5px;
+      color: #444444;
+      margin-bottom: 2px;
+      font-weight: 500;
+    }
+
+    .chat-bottom-bar {
+      background-color: #ffffff;
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      border-top: 1px solid #dddddd;
+    }
+
+    .chat-input {
+      flex: 1;
+      background-color: #f1f2f5;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* 2. 유스피드 (SNS) */
+    .feed-card {
+      border-bottom: 8px solid #f2f3f7;
+      padding: 14px;
+    }
+
+    .feed-author {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 9px;
+    }
+
+    .feed-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: #e6e9f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .feed-meta .name {
+      font-size: 12.5px;
+      font-weight: bold;
+      color: #1c1e21;
+    }
+
+    .feed-meta .sub {
+      font-size: 10.5px;
+      color: #888888;
+    }
+
+    .feed-content {
+      font-size: 13px;
+      line-height: 1.5;
+      color: #222222;
+      margin-bottom: 10px;
+    }
+
+    .feed-img-box {
+      width: 100%;
+      height: 140px;
+      border-radius: 8px;
+      background-color: #dfe6e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      margin-bottom: 10px;
+      color: #4a5568;
+    }
+
+    .feed-actions {
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 8px;
+      font-size: 11.5px;
+      color: #65676b;
+    }
+
+    /* 3. K-검색 (포털 검색) */
+    .search-box-wrap {
+      padding: 12px 14px;
+      background-color: #2db400;
+    }
+
+    .search-input-field {
+      width: 100%;
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 12.5px;
+      outline: none;
+    }
+
+    .search-result-item {
+      padding: 14px;
+      border-bottom: 1px solid #eeeeee;
+    }
+
+    .search-tag {
+      font-size: 10.5px;
+      color: #2db400;
+      margin-bottom: 3px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .search-title {
+      font-size: 13.5px;
+      font-weight: bold;
+      color: #002984;
+      margin-bottom: 4px;
+    }
+
+    .search-snippet {
+      font-size: 12px;
+      color: #444444;
+      line-height: 1.45;
+    }
+
+    /* 4. 인터넷 앱 (학생 자치 건의게시판) */
+    .url-bar-wrap {
+      background-color: #f1f3f5;
+      padding: 7px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .url-input {
+      flex: 1;
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: #475569;
+      text-align: center;
+    }
+
+    .web-board {
+      padding: 14px;
+      background-color: #ffffff;
+    }
+
+    .board-header {
+      border-bottom: 2px solid #334155;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .board-badge {
+      display: inline-block;
+      background-color: #e2e8f0;
+      color: #334155;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+    }
+
+    .board-title {
+      font-size: 14.5px;
+      font-weight: bold;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+
+    .board-meta {
+      font-size: 10.5px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .board-body {
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #334155;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 14px;
+    }
+
+    .comments-title {
+      font-size: 12.5px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+
+    .comment-item {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-bottom: 7px;
+    }
+
+    .comment-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      font-weight: bold;
+      color: #475569;
+      margin-bottom: 3px;
+    }
+
+    .comment-text {
+      font-size: 11.5px;
+      color: #334155;
+      line-height: 1.45;
+    }
+
+    /* 5. 스크린타임 앱 (과몰입) */
+    .time-header-box {
+      padding: 18px 14px;
+      background-color: #f8f9fc;
+      border-bottom: 1px solid #eef0f6;
+      text-align: center;
+    }
+
+    .total-time-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: #1a202c;
+      margin: 6px 0 2px;
+    }
+
+    .time-chart-mock {
+      display: flex;
+      align-items: flex-end;
+      height: 90px;
+      gap: 10px;
+      justify-content: center;
+      padding: 12px 0 4px;
+    }
+
+    .chart-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 9.5px;
+      color: #718096;
+    }
+
+    .bar {
+      width: 20px;
+      border-radius: 4px 4px 0 0;
+      background-color: #cbd5e1;
+    }
+
+    .bar.danger {
+      background-color: #ff5a5f;
+    }
+
+    .app-usage-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid #f1f2f6;
+      gap: 10px;
+    }
+
+    .app-usage-time {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    /* 6. 음악 앱 (AEN - FOCUS ON ME) */
+    .music-player-wrap {
+      height: 100%;
+      background: linear-gradient(180deg, #2b173d 0%, #120e20 100%);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 18px 22px;
+    }
+
+    .album-art {
+      width: 180px;
+      height: 180px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      margin: 16px 0 24px;
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+      transition: transform 0.4s ease;
+    }
+
+    .album-art.spinning {
+      transform: scale(1.04);
+    }
+
+    .music-meta-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    .music-meta-artist {
+      font-size: 13px;
+      color: #c4b5fd;
+      margin-bottom: 22px;
+    }
+
+    .audio-progress-wrap {
+      width: 100%;
+      margin-bottom: 18px;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 4px;
+      background-color: rgba(255, 255, 255, 0.25);
+      border-radius: 2px;
+      cursor: pointer;
+    }
+
+    .progress-bar-fill {
+      width: 38%;
+      height: 100%;
+      background-color: #a855f7;
+      border-radius: 2px;
+    }
+
+    .time-stamps {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 5px;
+    }
+
+    .music-controls {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      margin-bottom: 16px;
+    }
+
+    .play-circle-btn {
+      width: 54px;
+      height: 54px;
+      background-color: #a855f7;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(168, 85, 247, 0.4);
+    }
+
+    /* 7. 사진 앱 */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 3px;
+    }
+
+    .gallery-cell {
+      aspect-ratio: 1;
+      background-color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .gallery-cell span {
+      font-size: 9.5px;
+      margin-top: 3px;
+      color: #475569;
+    }
+
+    /* 8. 계산기 앱 */
+    .calc-wrap {
+      height: 100%;
+      background-color: #000000;
+      display: flex;
+      flex-direction: column;
+      padding: 14px;
+    }
+
+    .calc-screen {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 16px 8px;
+      color: #ffffff;
+      font-size: 44px;
+      font-weight: 300;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      padding-bottom: 16px;
+    }
+
+    .calc-btn {
+      height: 56px;
+      border-radius: 50%;
+      border: none;
+      font-size: 20px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #ffffff;
+      background-color: #333333;
+    }
+
+    .calc-btn.op { background-color: #ff9f0a; }
+    .calc-btn.fn { background-color: #a5a5a5; color: #000000; }
+    .calc-btn:active { filter: brightness(1.3); }
+  </style>
+</head>
+<body>
+
+  <!-- 스마트폰 프레임 -->
+  <div class="phone-wrapper">
+    
+    <!-- 상태 표시줄 -->
+    <div class="status-bar">
+      <span id="current-clock">09:41</span>
+      <div class="island"></div>
+      <div class="status-icons">
+        <span>5G</span>
+        <span>98%</span>
+      </div>
+    </div>
+
+    <!-- 스크린 내부 -->
+    <div class="screen-area">
+      
+      <!-- ================= [HOME SCREEN] ================= -->
+      <div class="home-screen" id="home-screen">
+        <div class="home-clock-widget">
+          <div class="date" id="home-date">10월 27일 화요일</div>
+          <div class="time" id="home-time">09:41</div>
+        </div>
+
+        <!-- 3열 그리드 (8개 앱 완벽 수납 및 잘림 방지) -->
+        <div class="app-grid">
+          <!-- 1. 스쿨톡 -->
+          <div class="app-item" onclick="openApp('app-talk')">
+            <div class="app-icon" style="background-color: #fae100; color: #371d1e;">
+              💬
+              <div class="badge">9+</div>
+            </div>
+            <div class="app-label">스쿨톡</div>
+          </div>
+
+          <!-- 2. 유스피드 -->
+          <div class="app-item" onclick="openApp('app-feed')">
+            <div class="app-icon" style="background: linear-gradient(135deg, #f58529, #dd2a7b, #8134af); color: #fff;">
+              📸
+              <div class="badge">3</div>
+            </div>
+            <div class="app-label">유스피드</div>
+          </div>
+
+          <!-- 3. K-검색 -->
+          <div class="app-item" onclick="openApp('app-search')">
+            <div class="app-icon" style="background-color: #2db400; color: #ffffff;">
+              🔍
+            </div>
+            <div class="app-label">K-검색</div>
+          </div>
+
+          <!-- 4. 인터넷 (새로 변경된 브라우저) -->
+          <div class="app-item" onclick="openApp('app-browser')">
+            <div class="app-icon" style="background-color: #0284c7; color: #ffffff;">
+              🧭
+            </div>
+            <div class="app-label">인터넷</div>
+          </div>
+
+          <!-- 5. 스크린타임 -->
+          <div class="app-item" onclick="openApp('app-screentime')">
+            <div class="app-icon" style="background-color: #475569; color: #ffffff;">
+              ⏳
+            </div>
+            <div class="app-label">스크린타임</div>
+          </div>
+
+          <!-- 6. 음악 (AEN - FOCUS ON ME) -->
+          <div class="app-item" onclick="openApp('app-music')">
+            <div class="app-icon" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); color: #ffffff;">
+              🎵
+            </div>
+            <div class="app-label">음악</div>
+          </div>
+
+          <!-- 7. 사진 -->
+          <div class="app-item" onclick="openApp('app-gallery')">
+            <div class="app-icon" style="background-color: #38bdf8; color: #ffffff;">
+              🖼️
+            </div>
+            <div class="app-label">사진</div>
+          </div>
+
+          <!-- 8. 계산기 -->
+          <div class="app-item" onclick="openApp('app-calc')">
+            <div class="app-icon" style="background-color: #1e293b; color: #ff9f0a;">
+              🔢
+            </div>
+            <div class="app-label">계산기</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [1. 스쿨톡 앱] ================= -->
+      <div class="app-window" id="app-talk">
+        <!-- 대화방 목록 -->
+        <div id="talk-list-view" style="display: flex; flex-direction: column; height: 100%;">
+          <div class="app-header">
+            <span>채팅</span>
+            <span style="font-size: 12px; color: #888;">편집</span>
+          </div>
+          <div class="app-body">
+            <!-- 오픈채팅 (디지털 관계 맺기 과몰입) -->
+            <div class="chat-list-item" onclick="openChatRoom('room-open')">
+              <div class="chat-avatar">🎭</div>
+              <div class="chat-info">
+                <div class="chat-name-row">
+                  <span class="chat-title">심야 익명 쉼터 (오픈채팅)</span>
+                  <span class="chat-time">오전 02:40</span>
+                </div>
+                <div class="chat-last-msg">오빠만 믿어 주말에 나오기 전에 얼굴 사진...</div>
+              </div>
+            </div>
+
+            <!-- 반 단톡방 (사이버 배제 및 은따) -->
+            <div class="chat-list-item" onclick="openChatRoom('room-ban')">
+              <div class="chat-avatar">🏫</div>
+              <div class="chat-info">
+                <div class="chat-name-row">
+                  <span class="chat-title">2학년 3반 단톡 (28)</span>
+                  <span class="chat-time">어제</span>
+                </div>
+                <div class="chat-last-msg">야 걔 빼고 방 다시 파자 ㅋㅋㅋ</div>
+              </div>
+            </div>
+
+            <!-- 우리집 (일상 낚시) -->
+            <div class="chat-list-item" onclick="openChatRoom('room-family')">
+              <div class="chat-avatar">🏠</div>
+              <div class="chat-info">
+                <div class="chat-name-row">
+                  <span class="chat-title">우리집 단톡</span>
+                  <span class="chat-time">어제</span>
+                </div>
+                <div class="chat-last-msg">오늘 저녁 삼겹살 구워 먹자 얼른 와~</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 개별 대화방: 오픈채팅 (관계 맺기 과몰입 & 위험성) -->
+        <div id="room-open" class="chat-room-view">
+          <div class="app-header">
+            <span class="back-btn" onclick="backToTalkList()">❮</span>
+            <span>심야 익명 쉼터</span>
+            <span>⋮</span>
+          </div>
+          <div class="chat-messages">
+            <div class="msg-row me">
+              <div class="msg-bubble">학교 애들은 진짜 다 가식적이고 절 이해해주는 사람이 하나도 없어요.. 요즘은 오빠랑 톡하는 시간만 기다려져요. 오빠가 제 유일한 안식처예요 ㅠㅠ</div>
+            </div>
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">달빛기사(27)</div>
+                <div class="msg-bubble">나도 우리 착한 지수 생각밖에 안 나. 세상에 널 진심으로 알아주는 건 나뿐이야. 주말에 오빠가 맛있는 거 사줄 테니까 우리 둘만 조용한 데서 만날까?</div>
+              </div>
+            </div>
+            <div class="msg-row me">
+              <div class="msg-bubble">네 좋아요! 부모님한텐 독서실 간다고 하고 나갈게요. 오빠 빨리 보고 싶어요.</div>
+            </div>
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">달빛기사(27)</div>
+                <div class="msg-bubble">그래 착하다. 만나기 전에 오늘 입은 옷이랑 얼굴 보이게 셀카 한 장만 찍어서 보내줄래? 오빠만 볼 테니까 예쁘게 찍어서 바로 줘봐.</div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-bottom-bar">
+            <input type="text" class="chat-input" placeholder="메시지 입력">
+          </div>
+        </div>
+
+        <!-- 개별 대화방: 반 단톡방 -->
+        <div id="room-ban" class="chat-room-view">
+          <div class="app-header">
+            <span class="back-btn" onclick="backToTalkList()">❮</span>
+            <span>2학년 3반 단톡 (28)</span>
+            <span>⋮</span>
+          </div>
+          <div class="chat-messages">
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">강민수</div>
+                <div class="msg-bubble">아까 체육시간에 민재 골 넣을 때 삽질한 거 봄? 진짜 개노답이다ㅋㅋ</div>
+              </div>
+            </div>
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">이진우</div>
+                <div class="msg-bubble">인정ㅋㅋ 걔 때문에 우리 조 꼴등함. 톡방에서 말도 섞기 싫은데 방 새로 파면 안 됨?</div>
+              </div>
+            </div>
+            <div class="msg-row me">
+              <div class="msg-bubble">야 그래도 굳이 방까지 새로 파냐;;</div>
+            </div>
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">박서준</div>
+                <div class="msg-bubble">너 민재 편이냐? 링크 보낼 테니까 민재 빼고 다 건너와라. 씹선비 사절.</div>
+              </div>
+            </div>
+            <div style="text-align: center; font-size: 11px; color: #555; margin: 4px 0;">
+              강민수님이 나갔습니다.<br>이진우님이 나갔습니다.
+            </div>
+          </div>
+          <div class="chat-bottom-bar">
+            <input type="text" class="chat-input" placeholder="메시지 입력">
+          </div>
+        </div>
+
+        <!-- 개별 대화방: 우리집 -->
+        <div id="room-family" class="chat-room-view">
+          <div class="app-header">
+            <span class="back-btn" onclick="backToTalkList()">❮</span>
+            <span>우리집 단톡</span>
+            <span>⋮</span>
+          </div>
+          <div class="chat-messages">
+            <div class="msg-row">
+              <div>
+                <div class="msg-sender">엄마</div>
+                <div class="msg-bubble">오늘 저녁 삼겹살 먹자. 학원 끝나고 7시까지 오렴~</div>
+              </div>
+            </div>
+            <div class="msg-row me">
+              <div class="msg-bubble">와 대박!! 맞춰서 갈게요!! 🍖</div>
+            </div>
+          </div>
+          <div class="chat-bottom-bar">
+            <input type="text" class="chat-input" placeholder="메시지 입력">
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [2. 유스피드 (SNS)] ================= -->
+      <div class="app-window" id="app-feed">
+        <div class="app-header">
+          <span style="font-weight: 800; font-size: 17px; color: #dd2a7b;">YouthFeed</span>
+          <span>🔍</span>
+        </div>
+        <div class="app-body">
+          <!-- 피드 1: 청소년 여론 형성 (서명 운동) -->
+          <div class="feed-card">
+            <div class="feed-author">
+              <div class="feed-avatar">🏫</div>
+              <div class="feed-meta">
+                <div class="name">청소년안전행동연대</div>
+                <div class="sub">어제 오후 5:20</div>
+              </div>
+            </div>
+            <div class="feed-content">
+              [온라인 서명 요청] 우리 학교 후문 사거리 대형 덤프트럭 과속 통행 제한 및 신호등 설치 청원 서명에 동참해주세요!<br><br>
+              학생 5,420명의 온라인 연대 서명을 모아 관할 구청 교통행정과에 공식 민원을 전달했습니다. 안전한 등하굣길은 우리 청소년들이 함께 만들어갑니다. #통학로안전 #청소년행동
+            </div>
+            <div class="feed-img-box">🚦</div>
+            <div class="feed-actions">
+              <span>❤️ 좋아요 3,421</span>
+              <span>💬 댓글 482</span>
+              <span>🔗 공유</span>
+            </div>
+          </div>
+
+          <!-- 피드 2: 부적절한 정보 노출 (불법 대리입금 광고) -->
+          <div class="feed-card">
+            <div class="feed-author">
+              <div class="feed-avatar">💰</div>
+              <div class="feed-meta">
+                <div class="name">급전 해결 24시 <span style="font-size:10px; color:#888;">(스폰서)</span></div>
+                <div class="sub">스폰서 광고</div>
+              </div>
+            </div>
+            <div class="feed-content">
+              학생/무직자 대리입금! 신분증 없이 카톡 하나로 10만원 즉시 송금. 친구 소개 시 뽀찌 지급! 문의 DM 주시면 실시간 답장합니다.
+            </div>
+            <div class="feed-actions">
+              <span style="color:#d9534f;">신고하기</span>
+              <span>공유</span>
+            </div>
+          </div>
+
+          <!-- 피드 3: 사이버 폭력 (이유 없는 악의적 저격글) -->
+          <div class="feed-card">
+            <div class="feed-author">
+              <div class="feed-avatar">👤</div>
+              <div class="feed-meta">
+                <div class="name">ㅇㅇ고 대신전해드립니다</div>
+                <div class="sub">1시간 전</div>
+              </div>
+            </div>
+            <div class="feed-content">
+              [익명 제보] 2학년 김OO 쟤는 숨만 쉬어도 왜 저러냐? 체육시간에 혼자 튀려고 오버 떠는 거 진짜 토나옴ㅋㅋ 반 애들도 뒤에서 다 너 극혐하는데 지만 인싸인 척 쩔어. 복도에서 눈깔 깔고 다녀라 역겨우니까.
+            </div>
+            <div class="feed-actions">
+              <span>❤️ 좋아요 284</span>
+              <span>💬 댓글 91</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [3. K-검색 (포털 검색)] ================= -->
+      <div class="app-window" id="app-search">
+        <div class="search-box-wrap">
+          <input type="text" class="search-input-field" value="청소년 스마트폰 사용 통계 팩트체크" readonly>
+        </div>
+        <div class="app-body">
+          <!-- 신속한 검색 결과 -->
+          <div class="search-result-item">
+            <span class="search-tag">정부공식 · 여성가족부 2026 청소년 통계</span>
+            <div class="search-title">2026 청소년 매체이용 및 과의존 실태조사 보고서 요약 (PDF)</div>
+            <div class="search-snippet">
+              검색 소요시간 0.08초. 전국 청소년 스마트폰 이용 시간은 일평균 4.2시간이며, 주로 학습 및 정보 탐색(42%), 커뮤니케이션(35%)에 신속하게 활용되고 있는 것으로 집계되었다.
+            </div>
+          </div>
+
+          <!-- 부적절한 정보 / 찌라시 -->
+          <div class="search-result-item">
+            <span class="search-tag" style="color: #e11d48;">SNS 실시간 트렌드 인용 블로그</span>
+            <div class="search-title">충격] 유명 아이돌 멤버 마약 파티 연루 체포 영상 유출?! (충격 단독)</div>
+            <div class="search-snippet">
+              모 커뮤니티에 올라온 딥페이크 합성 영상이 팩트체크 없이 퍼지며 2시간 만에 50만 조회수 기록. 댓글란에는 확인되지 않은 악성 루머와 신상 털기가 확산 중.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [4. 인터넷 앱 (집단지성 건의게시판)] ================= -->
+      <div class="app-window" id="app-browser">
+        <div class="url-bar-wrap">
+          <span style="font-size: 13px;">🔒</span>
+          <div class="url-input">school.edunet.go.kr/suggest/board/412</div>
+          <span style="font-size: 13px; color: #475569;">↻</span>
+        </div>
+        <div class="app-body">
+          <div class="web-board">
+            <div class="board-header">
+              <span class="board-badge">교내 학생 자치 건의함</span>
+              <div class="board-title">점심시간 급식실 새치기랑 배식 대기 줄 혼잡 문제 다들 어떻게 생각함?</div>
+              <div class="board-meta">작성자: 2학년 학생자치위원 | 작성일: 오늘 11:20 | 조회 482</div>
+            </div>
+
+            <div class="board-body">
+              요즘 비 오거나 날씨 안 좋을 때마다 2층 복도까지 줄이 엉켜서 20분 넘게 서 있는 애들도 많고, 뒤에서 새치기 시비도 자주 붙는데 좋은 해결 아이디어 있을까? 다들 좋은 방법 있으면 댓글로 보태줘!
+            </div>
+
+            <div class="comments-title">학생 집단 토론 댓글 (4)</div>
+
+            <!-- 댓글 1 -->
+            <div class="comment-item">
+              <div class="comment-top">
+                <span>3학년_김지훈</span>
+                <span>11:25</span>
+              </div>
+              <div class="comment-text">매주 학년별로 배식 순번 로테이션 돌리는 건 어떰? 이번 주가 3-2-1학년 순서였으면 다음 주는 1-2-3학년 순으로 바꾸면 불만 싹 들어갈 듯.</div>
+            </div>
+
+            <!-- 댓글 2 -->
+            <div class="comment-item">
+              <div class="comment-top">
+                <span>1학년_환경부</span>
+                <span>11:28</span>
+              </div>
+              <div class="comment-text">거기에 더해서 급식실 입구 바닥에 반별 대기 라인 스티커 붙여서 1열 통행 유도선 만들면 복도 엉키는 거 100% 막을 수 있음!</div>
+            </div>
+
+            <!-- 댓글 3 -->
+            <div class="comment-item">
+              <div class="comment-top">
+                <span>학생회_서연</span>
+                <span>11:32</span>
+              </div>
+              <div class="comment-text">오 다들 아이디어 좋다! 학생회에서 점심시간 10분씩 교대로 줄 안내 봉사 맡고, 위 로테이션 안건 정리해서 내일 교무회의 때 바로 건의서로 올릴게!</div>
+            </div>
+
+            <!-- 댓글 4 -->
+            <div class="comment-item">
+              <div class="comment-top">
+                <span>2학년_박민재</span>
+                <span>11:35</span>
+              </div>
+              <div class="comment-text">방송부도 협조할게요. 배식 시작 5분 전에 당일 순번 학년 방송 띄워주면 혼란 확 줄어들 것 같습니다!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [5. 스크린타임 (과몰입)] ================= -->
+      <div class="app-window" id="app-screentime">
+        <div class="app-header">
+          <span>스크린타임</span>
+          <span style="font-size: 12px; color: #007aff;">모든 기기</span>
+        </div>
+        <div class="app-body">
+          <div class="time-header-box">
+            <div style="font-size: 11.5px; color: #718096;">오늘 사용 시간</div>
+            <div class="total-time-val">11시간 28분</div>
+            <div style="font-size: 11px; color: #e53e3e;">어제보다 3시간 14분 증가함</div>
+
+            <!-- 그래프 -->
+            <div class="time-chart-mock">
+              <div class="chart-bar-wrap">
+                <div class="bar" style="height: 26px;"></div>
+                <span>오전</span>
+              </div>
+              <div class="chart-bar-wrap">
+                <div class="bar" style="height: 42px;"></div>
+                <span>오후</span>
+              </div>
+              <div class="chart-bar-wrap">
+                <div class="bar danger" style="height: 75px;"></div>
+                <span>야간</span>
+              </div>
+              <div class="chart-bar-wrap">
+                <div class="bar danger" style="height: 88px;"></div>
+                <span>새벽(3시)</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding: 10px 14px 4px; font-size: 11.5px; font-weight: bold; color: #888;">가장 많이 사용한 앱</div>
+          <div class="app-usage-row">
+            <span style="font-size: 18px;">🎬</span>
+            <span style="font-size: 12.5px; font-weight: 500;">숏폼 동영상 (숏츠/릴스)</span>
+            <span class="app-usage-time">5시간 42분</span>
+          </div>
+          <div class="app-usage-row">
+            <span style="font-size: 18px;">💬</span>
+            <span style="font-size: 12.5px; font-weight: 500;">메신저 및 SNS</span>
+            <span class="app-usage-time">3시간 50분</span>
+          </div>
+          <div class="app-usage-row">
+            <span style="font-size: 18px;">🎮</span>
+            <span style="font-size: 12.5px; font-weight: 500;">모바일 게임</span>
+            <span class="app-usage-time">1시간 30분</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [6. 음악 앱 (AEN - FOCUS ON ME)] ================= -->
+      <div class="app-window" id="app-music">
+        <div class="music-player-wrap">
+          <div class="album-art" id="album-art">🎧</div>
+          <div class="music-meta-title">FOCUS ON ME</div>
+          <div class="music-meta-artist">AEN</div>
+
+          <!-- 재생바 -->
+          <div class="audio-progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill"></div>
+            </div>
+            <div class="time-stamps">
+              <span>01:14</span>
+              <span>03:20</span>
+            </div>
+          </div>
+
+          <!-- 컨트롤러 -->
+          <div class="music-controls">
+            <span style="cursor: pointer; font-size: 18px;">⏮️</span>
+            <div class="play-circle-btn" onclick="togglePlayMock()">
+              <span id="play-btn-icon">▶</span>
+            </div>
+            <span style="cursor: pointer; font-size: 18px;">⏭️</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [7. 사진 앱] ================= -->
+      <div class="app-window" id="app-gallery">
+        <div class="app-header">
+          <span>사진첩</span>
+          <span style="font-size: 12px; color: #007aff;">선택</span>
+        </div>
+        <div class="app-body">
+          <div class="gallery-grid">
+            <div class="gallery-cell">🍱<span>오늘 급식</span></div>
+            <div class="gallery-cell">🐱<span>학교 길냥이</span></div>
+            <div class="gallery-cell">📝<span>수학 필기</span></div>
+            <div class="gallery-cell">🏫<span>운동장 노을</span></div>
+            <div class="gallery-cell">☕<span>친구랑 카페</span></div>
+            <div class="gallery-cell">👟<span>체육대회</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= [8. 계산기 앱] ================= -->
+      <div class="app-window" id="app-calc">
+        <div class="calc-wrap">
+          <div class="calc-screen" id="calc-display">0</div>
+          <div class="calc-grid">
+            <button class="calc-btn fn" onclick="calcAction('C')">C</button>
+            <button class="calc-btn fn" onclick="calcAction('+/-')">±</button>
+            <button class="calc-btn fn" onclick="calcAction('%')">%</button>
+            <button class="calc-btn op" onclick="calcAction('/')">÷</button>
+            <button class="calc-btn" onclick="calcAction('7')">7</button>
+            <button class="calc-btn" onclick="calcAction('8')">8</button>
+            <button class="calc-btn" onclick="calcAction('9')">9</button>
+            <button class="calc-btn op" onclick="calcAction('*')">×</button>
+            <button class="calc-btn" onclick="calcAction('4')">4</button>
+            <button class="calc-btn" onclick="calcAction('5')">5</button>
+            <button class="calc-btn" onclick="calcAction('6')">6</button>
+            <button class="calc-btn op" onclick="calcAction('-')">-</button>
+            <button class="calc-btn" onclick="calcAction('1')">1</button>
+            <button class="calc-btn" onclick="calcAction('2')">2</button>
+            <button class="calc-btn" onclick="calcAction('3')">3</button>
+            <button class="calc-btn op" onclick="calcAction('+')">+</button>
+            <button class="calc-btn" style="grid-column: span 2; border-radius: 28px; text-align: left; padding-left: 22px;" onclick="calcAction('0')">0</button>
+            <button class="calc-btn" onclick="calcAction('.')">.</button>
+            <button class="calc-btn op" onclick="calcAction('=')">=</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 하단 제스처 홈 바 (터치 시 홈 화면으로 복귀) -->
+    <div class="home-bar-wrap" onclick="goHome()">
+      <div class="home-indicator"></div>
+    </div>
+  </div>
+
+  <script>
+    // 시계 업데이트
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const timeStr = `${hours}:${mins}`;
+      
+      const clockTop = document.getElementById('current-clock');
+      const homeClock = document.getElementById('home-time');
+      if (clockTop) clockTop.textContent = timeStr;
+      if (homeClock) homeClock.textContent = timeStr;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 앱 열기
+    function openApp(appId) {
+      document.querySelectorAll('.app-window').forEach(win => win.style.display = 'none');
+      const targetApp = document.getElementById(appId);
+      if (targetApp) {
+        targetApp.style.display = 'flex';
+      }
+    }
+
+    // 홈 화면으로 복귀
+    function goHome() {
+      document.querySelectorAll('.app-window').forEach(win => win.style.display = 'none');
+      backToTalkList();
+    }
+
+    // 스쿨톡 대화방 열기 & 뒤로가기
+    function openChatRoom(roomId) {
+      document.getElementById('talk-list-view').style.display = 'none';
+      document.querySelectorAll('.chat-room-view').forEach(r => r.style.display = 'none');
+      const targetRoom = document.getElementById(roomId);
+      if (targetRoom) targetRoom.style.display = 'flex';
+    }
+
+    function backToTalkList() {
+      document.querySelectorAll('.chat-room-view').forEach(r => r.style.display = 'none');
+      const listView = document.getElementById('talk-list-view');
+      if (listView) listView.style.display = 'flex';
+    }
+
+    // 음악 재생 시뮬레이션
+    let isPlaying = false;
+    function togglePlayMock() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('play-btn-icon');
+      const art = document.getElementById('album-art');
+      if (isPlaying) {
+        btn.textContent = '⏸';
+        art.classList.add('spinning');
+      } else {
+        btn.textContent = '▶';
+        art.classList.remove('spinning');
+      }
+    }
+
+    // 계산기 로직
+    let calcCurrent = '0';
+    let calcPendingOp = null;
+    let calcPrevVal = null;
+    const calcDisp = document.getElementById('calc-display');
+
+    function calcAction(val) {
+      if (!isNaN(val) || val === '.') {
+        if (calcCurrent === '0' && val !== '.') calcCurrent = val;
+        else calcCurrent += val;
+      } else if (val === 'C') {
+        calcCurrent = '0';
+        calcPendingOp = null;
+        calcPrevVal = null;
+      } else if (val === '+/-') {
+        calcCurrent = String(parseFloat(calcCurrent) * -1);
+      } else if (val === '%') {
+        calcCurrent = String(parseFloat(calcCurrent) / 100);
+      } else if (['+', '-', '*', '/'].includes(val)) {
+        calcPrevVal = parseFloat(calcCurrent);
+        calcPendingOp = val;
+        calcCurrent = '0';
+      } else if (val === '=') {
+        if (calcPendingOp && calcPrevVal !== null) {
+          const cur = parseFloat(calcCurrent);
+          let res = 0;
+          if (calcPendingOp === '+') res = calcPrevVal + cur;
+          if (calcPendingOp === '-') res = calcPrevVal - cur;
+          if (calcPendingOp === '*') res = calcPrevVal * cur;
+          if (calcPendingOp === '/') res = cur !== 0 ? calcPrevVal / cur : '오류';
+          calcCurrent = String(res);
+          calcPendingOp = null;
+          calcPrevVal = null;
+        }
+      }
+      calcDisp.textContent = calcCurrent.length > 9 ? calcCurrent.slice(0, 9) : calcCurrent;
+    }
+  </script>
+</body>
+</html>
